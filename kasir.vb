@@ -1,4 +1,5 @@
-﻿Imports System.Text
+﻿Imports System.Drawing.Printing
+Imports System.Text
 Imports MySql.Data.MySqlClient
 Imports Newtonsoft.Json
 
@@ -130,7 +131,88 @@ Public Class kasir
         Return idBarang
 
     End Function
+    Dim WithEvents PD As New PrintDocument
+    Dim ppd As New PrintPreviewDialog
+    Dim longpaper As Integer
+    Private Sub pd_BeginPrint(sender As Object, e As PrintEventArgs) Handles PD.BeginPrint
+        Dim pagesetup As New PageSettings
+        pagesetup.PaperSize = New PaperSize("custom", 600, 500)
+        PD.DefaultPageSettings = pagesetup
+    End Sub
+    Sub changelongpaper()
+        Dim rowcount As Integer
+        longpaper = 0
+        rowcount = itemGrid.Rows.Count
+        longpaper = rowcount * 15
+        longpaper = longpaper + 240
+    End Sub
+    Private Sub pd_PrintPage(sender As Object, e As PrintPageEventArgs) Handles PD.PrintPage
+        'menyimpan font kedalam variabel
+        Dim f8 As New Font("Calibri", 8, FontStyle.Regular)
+        Dim f10 As New Font("Calibri", 10, FontStyle.Regular)
+        Dim f10b As New Font("Calibri", 10, FontStyle.Bold)
+        Dim f14 As New Font("Calibri", 14, FontStyle.Bold)
 
+        Dim leftmargin As Integer = PD.DefaultPageSettings.Margins.Left
+        Dim centermargin As Integer = PD.DefaultPageSettings.PaperSize.Width / 2
+        Dim rightmargin As Integer = PD.DefaultPageSettings.PaperSize.Width - PD.DefaultPageSettings.Margins.Right
+
+        'font alignment
+        Dim right As New StringFormat
+        Dim center As New StringFormat
+
+        right.Alignment = StringAlignment.Far
+        center.Alignment = StringAlignment.Center
+
+        Dim line As String
+        line = "*******************************************************************************************************************************"
+        Dim tall As Integer = 10
+
+        ' Header
+        e.Graphics.DrawString("EDGAR SHOP", f14, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("PARUNG", f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("oleh: " & userKasir.Text, f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString(line, f10, Brushes.Black, centermargin, tall, center)
+
+        ' DetailHeader
+        tall += 20
+        e.Graphics.DrawString("Barang", f8, Brushes.Black, leftmargin, tall)
+        e.Graphics.DrawString("Harga", f8, Brushes.Black, leftmargin + 80, tall)
+        e.Graphics.DrawString("Total", f8, Brushes.Black, rightmargin + 50, tall, right)
+        tall += 20
+        e.Graphics.DrawString(line, f10, Brushes.Black, centermargin, tall, center)
+
+
+        ' Content
+        For Each erow As DataGridViewRow In itemGrid.Rows
+            tall += 20
+            ' Adjust the following line based on your DataGridView columns
+            e.Graphics.DrawString($"{erow.Cells("nama_barang").Value}", f8, Brushes.Black, leftmargin, tall)
+            e.Graphics.DrawString($"{erow.Cells("quantity").Value}", f8, Brushes.Black, leftmargin + 80, tall)
+            e.Graphics.DrawString($"{erow.Cells("harga").Value}", f8, Brushes.Black, leftmargin + 300, tall)
+        Next
+        tall += 20
+        e.Graphics.DrawString("------------------------------------", f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("Total Pembelian: " & totalBarangInput.Text, f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("subtotal: " & subInput.Text, f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("diskon: " & diskonInput.Text, f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("------------------------------------", f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("total: " & totalInput.Text, f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("tunai: " & tunaiInput.Text, f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("kembali: " & kembalianInput.Text, f10, Brushes.Black, centermargin, tall, center)
+
+
+    End Sub
 
 
     Private Sub admin_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -490,17 +572,10 @@ Public Class kasir
 
                     ' Execute the query
                     cmd.ExecuteNonQuery()
-                    Print.UserID = userID
-                    Print.Items = itemJSON
-                    Print.IDBarang = String.Join(",", idBarangArray)
-                    Print.JumlahBarang = totalBarang
-                    Print.Diskon = diskon
-                    Print.Subtotal = subTotal
-                    Print.JumlahTotal = total
-                    Print.Tunai = tunai
-                    Print.Kembalian = kembalian
-                    Me.Hide()
-                    Print.Show()
+
+                    changelongpaper()
+                    ppd.Document = PD
+                    ppd.ShowDialog()
 
 
                     ' Optionally, you can display a success message

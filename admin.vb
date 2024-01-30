@@ -3,10 +3,7 @@ Imports kasir_app.Globals
 Imports Newtonsoft.Json
 Imports System.Text
 Imports System.Drawing.Printing
-Imports iText.Kernel.Pdf
-Imports iText.Layout
-Imports iText.Layout.Element
-Imports iText.Layout.Properties
+
 
 Public Class admin
     Dim cs As String = "Server=localhost;Database=penjualan-vb;Uid=root;Pwd=;"
@@ -136,7 +133,88 @@ Public Class admin
         Return idBarang
 
     End Function
+    Dim WithEvents PD As New PrintDocument
+    Dim ppd As New PrintPreviewDialog
+    Dim longpaper As Integer
+    Private Sub pd_BeginPrint(sender As Object, e As PrintEventArgs) Handles PD.BeginPrint
+        Dim pagesetup As New PageSettings
+        pagesetup.PaperSize = New PaperSize("custom", 600, 500)
+        PD.DefaultPageSettings = pagesetup
+    End Sub
+    Sub changelongpaper()
+        Dim rowcount As Integer
+        longpaper = 0
+        rowcount = itemGrid.Rows.Count
+        longpaper = rowcount * 15
+        longpaper = longpaper + 240
+    End Sub
+    Private Sub pd_PrintPage(sender As Object, e As PrintPageEventArgs) Handles PD.PrintPage
+        'menyimpan font kedalam variabel
+        Dim f8 As New Font("Calibri", 8, FontStyle.Regular)
+        Dim f10 As New Font("Calibri", 10, FontStyle.Regular)
+        Dim f10b As New Font("Calibri", 10, FontStyle.Bold)
+        Dim f14 As New Font("Calibri", 14, FontStyle.Bold)
 
+        Dim leftmargin As Integer = PD.DefaultPageSettings.Margins.Left
+        Dim centermargin As Integer = PD.DefaultPageSettings.PaperSize.Width / 2
+        Dim rightmargin As Integer = PD.DefaultPageSettings.PaperSize.Width - PD.DefaultPageSettings.Margins.Right
+
+        'font alignment
+        Dim right As New StringFormat
+        Dim center As New StringFormat
+
+        right.Alignment = StringAlignment.Far
+        center.Alignment = StringAlignment.Center
+
+        Dim line As String
+        line = "*******************************************************************************************************************************"
+        Dim tall As Integer = 10
+
+        ' Header
+        e.Graphics.DrawString("EDGAR SHOP", f14, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("PARUNG", f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("oleh: " & userKasir.Text, f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString(line, f10, Brushes.Black, centermargin, tall, center)
+
+        ' DetailHeader
+        tall += 20
+        e.Graphics.DrawString("Barang", f8, Brushes.Black, leftmargin, tall)
+        e.Graphics.DrawString("Harga", f8, Brushes.Black, leftmargin + 80, tall)
+        e.Graphics.DrawString("Total", f8, Brushes.Black, rightmargin + 50, tall, right)
+        tall += 20
+        e.Graphics.DrawString(line, f10, Brushes.Black, centermargin, tall, center)
+
+
+        ' Content
+        For Each erow As DataGridViewRow In itemGrid.Rows
+            tall += 20
+            ' Adjust the following line based on your DataGridView columns
+            e.Graphics.DrawString($"{erow.Cells("nama_barang").Value}", f8, Brushes.Black, leftmargin, tall)
+            e.Graphics.DrawString($"{erow.Cells("quantity").Value}", f8, Brushes.Black, leftmargin + 80, tall)
+            e.Graphics.DrawString($"{erow.Cells("harga").Value}", f8, Brushes.Black, leftmargin + 300, tall)
+        Next
+        tall += 20
+        e.Graphics.DrawString("------------------------------------", f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("Total Pembelian: " & totalBarangInput.Text, f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("subtotal: " & subInput.Text, f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("diskon: " & diskonInput.Text, f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("------------------------------------", f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("total: " & totalInput.Text, f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("tunai: " & tunaiInput.Text, f10, Brushes.Black, centermargin, tall, center)
+        tall += 20
+        e.Graphics.DrawString("kembali: " & kembalianInput.Text, f10, Brushes.Black, centermargin, tall, center)
+
+
+    End Sub
 
 
     Private Sub admin_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -447,14 +525,7 @@ Public Class admin
         ' Return the combined item ID
         Return combinedItemID.ToString()
     End Function
-    Dim WithEvents PD As New PrintDocument
-    Dim ppd As New PrintPreviewDialog
-    Dim longpaper As Integer
-    Private Sub pd_BeginPrint(sender As Object, e As PrintEventArgs) Handles PD.BeginPrint
-        Dim pagesetup As New PageSettings
-        pagesetup.PaperSize = New PaperSize("custom", 600, 500)
-        PD.DefaultPageSettings = pagesetup
-    End Sub
+
 
     Private Sub printButton_Click(sender As Object, e As EventArgs) Handles printButton.Click
         Try
@@ -507,19 +578,11 @@ Public Class admin
 
                     ' Execute the query
                     cmd.ExecuteNonQuery()
-                    Print.UserID = userID
-                    Print.Items = itemJSON
-                    Print.IDBarang = String.Join(",", idBarangArray)
-                    Print.JumlahBarang = totalBarang
-                    Print.Diskon = diskon
-                    Print.Subtotal = subTotal
-                    Print.JumlahTotal = total
-                    Print.Tunai = tunai
-                    Print.Kembalian = kembalian
-                    Me.Hide()
-                    Print.Show()
 
 
+                    changelongpaper()
+                    ppd.Document = PD
+                    ppd.ShowDialog()
                     ' Optionally, you can display a success message
                     MessageBox.Show("Data inserted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
@@ -531,94 +594,10 @@ Public Class admin
             ' Handle any exceptions that might occur during the process
             MessageBox.Show("Error: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
-        ' Create a PrintDocument instance
-        Using PD As New PrintDocument()
-
-            AddHandler PD.PrintPage, Sub(senderPrint As Object, ePrint As PrintPageEventArgs)
-
-                                         Dim f8 As New Font("Calibri", 8, FontStyle.Regular)
-                                         Dim f10 As New Font("Calibri", 10, FontStyle.Regular)
-                                         Dim f10b As New Font("Calibri", 10, FontStyle.Bold)
-                                         Dim f14 As New Font("Calibri", 14, FontStyle.Bold)
-                                         Dim leftmargin As Integer = PD.DefaultPageSettings.Margins.Left
-                                         Dim centermargin As Integer = PD.DefaultPageSettings.PaperSize.Width / 2
-                                         Dim rightmargin As Integer = PD.DefaultPageSettings.PaperSize.Width - PD.DefaultPageSettings.Margins.Right
-
-                                         'font alignment
-                                         Dim right As New StringFormat
-                                         Dim center As New StringFormat
-
-                                         right.Alignment = StringAlignment.Far
-                                         center.Alignment = StringAlignment.Center
-                                         Dim line As String
-                                         line = "*******************************************************************************************************************************"
-                                         Dim tall As Integer = 10
-                                         ' Header
-                                         ePrint.Graphics.DrawString("CESHOP", f14, Brushes.Black, centermargin, tall, center)
-                                         tall += 20
-                                         ePrint.Graphics.DrawString("JLN H MUSA 2 LIMO", f10, Brushes.Black, centermargin, tall, center)
-                                         tall += 20
-                                         ePrint.Graphics.DrawString("oleh: " & inputKasir.Text, f10, Brushes.Black, centermargin, tall, center)
-                                         tall += 20
-                                         ePrint.Graphics.DrawString(line, f10, Brushes.Black, centermargin, tall, center)
-
-                                         ' DetailHeader
-                                         tall += 20
-                                         ePrint.Graphics.DrawString("Barang", f8, Brushes.Black, leftmargin, tall)
-                                         ePrint.Graphics.DrawString("Harga", f8, Brushes.Black, leftmargin + 80, tall)
-                                         ePrint.Graphics.DrawString("Jumlah", f8, Brushes.Black, leftmargin + 200, tall)
-                                         ePrint.Graphics.DrawString("Total", f8, Brushes.Black, rightmargin - 80, tall, Right)
-                                         tall += 20
-                                         ePrint.Graphics.DrawString(line, f10, Brushes.Black, centermargin, tall, center)
-
-                                         ' Content
-                                         For Each erow As DataGridViewRow In itemGrid.Rows
-                                             tall += 20
-                                             ' Adjust the following line based on your DataGridView columns
-                                             ePrint.Graphics.DrawString($"{erow.Cells("nama_barang").Value}", f8, Brushes.Black, leftmargin, tall)
-                                             ePrint.Graphics.DrawString($"{erow.Cells("harga").Value}", f8, Brushes.Black, leftmargin + 80, tall)
-                                             ePrint.Graphics.DrawString($"{erow.Cells("quantity").Value}", f8, Brushes.Black, leftmargin + 200, tall)
-                                             ' ePrint.Graphics.DrawString($"{erow.Cells("ttl").Value}", f8, Brushes.Black, rightmargin - 80, tall, Right)
-                                         Next
-
-                                         tall += 20
-                                         ePrint.Graphics.DrawString("------------------------------------", f10, Brushes.Black, centermargin, tall, center)
-                                         tall += 20
-                                         ePrint.Graphics.DrawString("Total Pembelian: " & totalBarangInput.Text, f10, Brushes.Black, centermargin, tall, center)
-                                         tall += 20
-                                         ePrint.Graphics.DrawString("subtotal: " & subInput.Text, f10, Brushes.Black, centermargin, tall, center)
-                                         tall += 20
-                                         ePrint.Graphics.DrawString("diskon: " & diskonInput.Text, f10, Brushes.Black, centermargin, tall, center)
-                                         tall += 20
-                                         ePrint.Graphics.DrawString("------------------------------------", f10, Brushes.Black, centermargin, tall, center)
-                                         tall += 20
-                                         ePrint.Graphics.DrawString("total: " & totalInput.Text, f10, Brushes.Black, centermargin, tall, center)
-                                         tall += 20
-                                         ePrint.Graphics.DrawString("tunai: " & tunaiInput.Text, f10, Brushes.Black, centermargin, tall, center)
-                                         tall += 20
-                                         ePrint.Graphics.DrawString("kembali: " & kembalianInput.Text, f10, Brushes.Black, centermargin, tall, center)
-
-                                     End Sub
-        End Using
-        Dim defaultPrinterName As String = PD.PrinterSettings.PrinterName
 
 
 
-        ' Set the printer settings (you may need to adjust these settings)
-        PD.PrinterSettings.PrinterName = defaultPrinterName ' Set the printer name
-
-        ' Print the document
-        PD.Print()
-       
     End Sub
-    Sub changelongpaper()
-        Dim rowcount As Integer
-        longpaper = 0
-        rowcount = itemGrid.Rows.Count
-        longpaper = rowcount * 15
-        longpaper = longpaper + 240
-    End Sub
-
     Private Function FindRowByItemName(dataGridView As DataGridView, itemName As String) As DataGridViewRow
         For Each row As DataGridViewRow In dataGridView.Rows
             If Not row.IsNewRow Then
@@ -668,8 +647,12 @@ Public Class admin
     End Sub
 
     Private Sub history_Click(sender As Object, e As EventArgs) Handles history.Click
-        ' Dim history As New history()
+        Dim history As New Laporan()
         Me.Hide()
         history.Show()
+    End Sub
+
+    Private Sub Kasir_Click(sender As Object, e As EventArgs) Handles Kasir.Click
+
     End Sub
 End Class

@@ -22,6 +22,9 @@
     <Compile Update="CRUDB\EditFormBarang.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="Laporan.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="kasir.vb">
       <SubType>Form</SubType>
     </Compile>

@@ -39,3 +39,5 @@ C:\Users\Eren\source\repos\kasir-app\obj\Debug\net8.0-windows\kasir_app.CreateFo
 C:\Users\Eren\source\repos\kasir-app\obj\Debug\net8.0-windows\kasir_app.CreateFormUser.resources
 C:\Users\Eren\source\repos\kasir-app\obj\Debug\net8.0-windows\kasir_app.EditFormUser.resources
 C:\Users\Eren\source\repos\kasir-app\obj\Debug\net8.0-windows\kasir_app.kasir.resources
+C:\Users\Eren\source\repos\kasir-app\obj\Debug\net8.0-windows\kasir-app.sourcelink.json
+C:\Users\Eren\source\repos\kasir-app\obj\Debug\net8.0-windows\kasir_app.Laporan.resources

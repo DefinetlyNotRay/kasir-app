@@ -122,4 +122,10 @@ Public Class akun
         Dim admin As New admin()
         admin.Show()
     End Sub
+
+    Private Sub history_Click(sender As Object, e As EventArgs) Handles history.Click
+        Dim history As New Laporan()
+        Me.Hide()
+        history.Show()
+    End Sub
 End Class
